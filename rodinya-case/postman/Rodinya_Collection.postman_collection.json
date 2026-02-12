@@ -1,0 +1,384 @@
+{
+  "info": {
+    "name": "Rodinya Media Library API",
+    "description": "Kimlik doğrulama, kaynak-bazlı yetkilendirme ve medya yönetimi REST API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Servisin ayakta olup olmadığını kontrol eder."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('access_token', res.data.accessToken);",
+                  "    pm.environment.set('refresh_token', res.data.refreshToken);",
+                  "    pm.environment.set('user_id', res.data.user._id);",
+                  "    pm.test('Register başarılı', () => pm.response.to.have.status(201));",
+                  "} else {",
+                  "    pm.test('Register hatası: ' + JSON.stringify(res.message), () => false);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Passw0rd!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Yeni kullanıcı kaydı. Başarılı olursa access_token, refresh_token ve user_id otomatik olarak environment'a kaydedilir."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('access_token', res.data.accessToken);",
+                  "    pm.environment.set('refresh_token', res.data.refreshToken);",
+                  "    pm.environment.set('user_id', res.data.user._id);",
+                  "    pm.test('Login başarılı', () => pm.response.to.have.status(200));",
+                  "} else {",
+                  "    pm.test('Login hatası: ' + JSON.stringify(res.message), () => false);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Passw0rd!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Kullanıcı girişi. Başarılı olursa token'lar otomatik kaydedilir."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('access_token', res.data.accessToken);",
+                  "    pm.environment.set('refresh_token', res.data.refreshToken);",
+                  "    pm.test('Token yenileme başarılı', () => pm.response.to.have.status(200));",
+                  "} else {",
+                  "    pm.test('Refresh hatası: ' + JSON.stringify(res.message), () => false);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Refresh token ile yeni access + refresh token alır."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": ["{{base_url}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Giriş yapmış kullanıcının bilgilerini döner."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {
+          "name": "Upload",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.environment.set('media_id', res.data._id);",
+                  "    pm.test('Upload başarılı', () => pm.response.to.have.status(201));",
+                  "} else {",
+                  "    pm.test('Upload hatası: ' + JSON.stringify(res.message), () => false);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Yüklenecek JPEG dosyası (maks 5MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/media/upload",
+              "host": ["{{base_url}}"],
+              "path": ["media", "upload"]
+            },
+            "description": "JPEG görsel yükler. Başarılı olursa media_id otomatik kaydedilir."
+          },
+          "response": []
+        },
+        {
+          "name": "My Media",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/media/my",
+              "host": ["{{base_url}}"],
+              "path": ["media", "my"]
+            },
+            "description": "Giriş yapmış kullanıcının yüklediği tüm medyaları listeler."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Media by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/media/{{media_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["media", "{{media_id}}"]
+            },
+            "description": "Belirtilen medyanın meta bilgisini getirir. Sahip veya yetkili kullanıcı erişebilir."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Media",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/media/{{media_id}}/download",
+              "host": ["{{base_url}}"],
+              "path": ["media", "{{media_id}}", "download"]
+            },
+            "description": "Medya dosyasını indirir. Sahip veya yetkili kullanıcı erişebilir."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Media",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/media/{{media_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["media", "{{media_id}}"]
+            },
+            "description": "Medyayı siler. Sadece sahip silebilir."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/media/{{media_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["media", "{{media_id}}", "permissions"]
+            },
+            "description": "Medyanın izin listesini görüntüler. Sadece sahip erişebilir."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{target_user_id}}\",\n  \"action\": \"add\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/media/{{media_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["media", "{{media_id}}", "permissions"]
+            },
+            "description": "Başka bir kullanıcıya medya erişim izni ekler. Sadece sahip yapabilir."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{target_user_id}}\",\n  \"action\": \"remove\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/media/{{media_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["media", "{{media_id}}", "permissions"]
+            },
+            "description": "Kullanıcının medya erişim iznini kaldırır. Sadece sahip yapabilir."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
