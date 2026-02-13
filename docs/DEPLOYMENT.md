@@ -142,5 +142,5 @@ Proje **MongoDB Atlas** (bulut) kullanir. Yerel MongoDB gerektirmez.
 6. `.env` dosyasina `MONGO_URI` olarak yapistir
 
 ```
-MONGO_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/rodinya?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/rodinya?retryWrites=true&w=majority
 ```
