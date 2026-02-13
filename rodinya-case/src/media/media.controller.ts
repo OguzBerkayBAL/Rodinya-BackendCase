@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  ForbiddenException,
   StreamableFile,
 } from '@nestjs/common';
 import {
@@ -86,6 +87,14 @@ export class MediaController {
     }));
   }
 
+  @Get('stats')
+  @ApiOperation({ summary: 'Yükleme istatistikleri (Aggregation Pipeline)' })
+  @ApiResponse({ status: 200, description: 'İstatistik bilgileri' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getStats(@CurrentUser() user: { userId: string }) {
+    return this.mediaService.getStats(user.userId);
+  }
+
   @Get(':id')
   @UseGuards(MediaAccessGuard)
   @ApiOperation({ summary: 'Medya meta bilgisini getir' })
@@ -117,7 +126,14 @@ export class MediaController {
   @ApiResponse({ status: 404, description: 'Medya bulunamadı' })
   async download(@Param('id') _id: string, @Req() req: any): Promise<StreamableFile> {
     const media = req.media;
+    const uploadsDir = resolve(process.env.UPLOAD_DIR || './uploads');
     const absolutePath = resolve(media.filePath);
+
+    // Path traversal korumasi: dosya uploads dizini disina cikamasin
+    if (!absolutePath.startsWith(uploadsDir)) {
+      throw new ForbiddenException('Geçersiz dosya yolu');
+    }
+
     const file = createReadStream(absolutePath);
     return new StreamableFile(file, {
       type: media.mimeType,

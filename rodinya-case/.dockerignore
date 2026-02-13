@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.env
+uploads/*
+!uploads/.gitkeep
+*.md
+postman
+test
+coverage
+.prettierrc
+eslint.config.mjs

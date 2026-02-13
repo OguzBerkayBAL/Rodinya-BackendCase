@@ -9,8 +9,38 @@ NestJS + MongoDB Atlas + JWT (Access/Refresh) + Swagger ile kimlik doğrulama, k
 - **JWT** - Kimlik doğrulama (Access + Refresh Token)
 - **Swagger** - API dokümantasyonu (OpenAPI)
 - **Multer** - Dosya yükleme
+- **sharp** - Image sanitization (decode + re-encode)
+- **Docker** - Containerization
 
-## Kurulum
+## Güvenlik Özellikleri
+
+- **Image Sanitization Pipeline** - 4 katmanlı dosya doğrulama: MIME/uzantı kontrolü → magic number (FF D8 FF) → sharp ile decode → re-encode (metadata, trailing data, polyglot payload temizlenir)
+- **bcrypt 72-Byte Truncation Fix** - JWT tokenlar SHA-256 ile pre-hash edilerek bcrypt'in 72-byte kesme sorununa karşı korunur
+- **Path Traversal Koruması** - Dosya indirme isteklerinde uploads dizini dışına çıkma engeli
+- **Rate Limiting** - Brute force koruması (login/register: 5 istek/dk, genel: 10 istek/dk)
+- **Refresh Token Rotation** - Her refresh'te yeni token, eski token DB'de invalidate; eski token tekrar kullanılırsa tüm oturumlar sonlandırılır
+- **Session Version** - Login/logout'ta tüm eski access token'lar anında geçersiz
+- **Request Logging** - Her istek için userId, endpoint, status code ve süre loglanır
+
+## Docker ile Çalıştırma (Önerilen)
+
+```bash
+# .env dosyasını oluştur ve MongoDB Atlas URI'sini gir
+cp .env.example .env
+
+# Tek komutla çalıştır
+docker compose up --build
+
+# Arka planda çalıştır
+docker compose up --build -d
+
+# Durdur
+docker compose down
+```
+
+> **Not:** `.env` dosyasındaki `MONGO_URI` değerini kendi MongoDB Atlas bağlantı bilgilerinizle güncellemeniz gerekmektedir.
+
+## Kurulum (Docker'sız)
 
 ```bash
 # Bağımlılıkları yükle
@@ -58,7 +88,8 @@ http://localhost:3000/api/docs
 |---|---|---|
 | POST | `/auth/register` | Yeni kullanıcı kaydı |
 | POST | `/auth/login` | Kullanıcı girişi |
-| POST | `/auth/refresh` | Token yenileme |
+| POST | `/auth/refresh` | Token yenileme (rotation) |
+| POST | `/auth/logout` | Çıkış (tüm token'ları geçersiz kıl) |
 
 ### Users
 | Metod | Yol | Açıklama |
@@ -69,6 +100,7 @@ http://localhost:3000/api/docs
 | Metod | Yol | Açıklama |
 |---|---|---|
 | POST | `/media/upload` | Görsel yükle (sadece JPEG, maks 5MB) |
+| GET | `/media/stats` | Yükleme istatistikleri (Aggregation Pipeline) |
 | GET | `/media/my` | Kendi medyalarımı listele |
 | GET | `/media/:id` | Medya meta bilgisi |
 | GET | `/media/:id/download` | Medya dosyasını indir |
@@ -97,11 +129,23 @@ curl -X POST http://localhost:3000/auth/login \
   -d '{"email":"user@example.com","password":"Passw0rd!"}'
 ```
 
+### Çıkış
+```bash
+curl -X POST http://localhost:3000/auth/logout \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
 ### Dosya Yükle
 ```bash
 curl -X POST http://localhost:3000/media/upload \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -F "file=@/path/to/image.jpg"
+```
+
+### Yükleme İstatistikleri
+```bash
+curl -X GET http://localhost:3000/media/stats \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### Dosya İndir
@@ -125,6 +169,8 @@ curl -X POST http://localhost:3000/media/<MEDIA_ID>/permissions \
 - `email`: string (unique)
 - `passwordHash`: string
 - `role`: 'user' | 'admin'
+- `hashedRefreshToken`: string | null
+- `sessionVersion`: number (default: 1)
 - `createdAt`, `updatedAt`
 
 ### Media
@@ -133,6 +179,10 @@ curl -X POST http://localhost:3000/media/<MEDIA_ID>/permissions \
 - `fileName`: string
 - `filePath`: string
 - `mimeType`: string
-- `size`: number
+- `size`: number (sanitize sonrası boyut)
 - `allowedUserIds`: ObjectId[] (default: [])
 - `createdAt`
+
+## Detaylı Dokümantasyon
+
+Proje mimarisi, güvenlik önlemleri, API detayları ve daha fazlası için [docs/](docs/README.md) klasörüne bakınız.

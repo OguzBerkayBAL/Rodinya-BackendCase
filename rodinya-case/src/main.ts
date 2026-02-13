@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
@@ -11,8 +12,8 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Global response interceptor
-  app.useGlobalInterceptors(new TransformInterceptor());
+  // Global interceptors
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
   // Global validation pipe
   app.useGlobalPipes(

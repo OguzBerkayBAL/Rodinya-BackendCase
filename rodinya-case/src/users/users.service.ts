@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
+//Veritabanı ile konuşan katman
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
@@ -18,5 +19,23 @@ export class UsersService {
 
   async findById(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).exec();
+  }
+
+  //Refresh rotası için kullanılır
+  async updateRefreshToken(userId: string, hashedRefreshToken: string | null): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { hashedRefreshToken }).exec();
+  }
+
+  //Tüm access tokenleri geçersiz hale getirmek için kullanılır
+  async incrementSessionVersion(userId: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { $inc: { sessionVersion: 1 } }).exec();
+  }
+
+  //Global logout için kullanılır
+  async invalidateSession(userId: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      hashedRefreshToken: null,
+      $inc: { sessionVersion: 1 },
+    }).exec();
   }
 }

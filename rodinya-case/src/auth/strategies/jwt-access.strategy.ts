@@ -16,16 +16,24 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      //Süresi dolmuş tokenları ignore etme
       ignoreExpiration: false,
+      //Secret key'i kullan
       secretOrKey: secret,
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
+  async validate(payload: { sub: string; email: string; role: string; sessionVersion: number }) {
     const user = await this.usersService.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException('Kullanıcı bulunamadı');
     }
+
+    // sessionVersion kontrolu: login/logout sonrasi eski tokenlar gecersiz
+    if (user.sessionVersion !== payload.sessionVersion) {
+      throw new UnauthorizedException('Oturum geçersiz, lütfen tekrar giriş yapın');
+    }
+
     return { userId: payload.sub, email: payload.email, role: payload.role };
   }
 }
